@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ReviewKhoaHoc.Database;
+using ReviewKhoaHoc.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+
+app.UseMiddleware<ApiKeyMiddleware>();
 
 app.UseHttpsRedirection();
 

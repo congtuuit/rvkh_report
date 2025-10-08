@@ -1,17 +1,13 @@
-﻿namespace ReviewKhoaHoc.Entities
+﻿namespace ReviewKhoaHoc.Models
 {
-    public class CourseViewAudit
+    public class CourseViewAuditModel
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
         public required string CourseId { get; set; }
         public string CourseName { get; set; } = string.Empty;
         public string CourseType { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public string CourseLink { get; set; } = string.Empty;
         public int ViewCount { get; set; } = 1;
-
-        public DateTime Date { get; set; }   // yyyy-MM-dd
         public DateTime ViewedAt { get; set; } = DateTime.UtcNow;
-        public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     }
 }
