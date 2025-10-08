@@ -51,12 +51,19 @@ namespace ReviewKhoaHoc.Controllers
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats(DateTime? from = null, DateTime? to = null)
         {
+            var fromDate = from ?? DateTime.UtcNow.AddDays(-7);
+            var toDate = to ?? DateTime.UtcNow;
+
+            var fromUtc = DateTime.SpecifyKind(fromDate, DateTimeKind.Utc);
+            var toUtc = DateTime.SpecifyKind(toDate, DateTimeKind.Utc);
+
             var query = _db.CourseViewAudits.AsQueryable();
 
-            if (from.HasValue) query = query.Where(x => x.ViewedAt >= from);
-            if (to.HasValue) query = query.Where(x => x.ViewedAt <= to);
+            if (from.HasValue) query = query.Where(x => x.ViewedAt >= fromUtc);
+            if (to.HasValue) query = query.Where(x => x.ViewedAt <= toUtc);
 
-            var stats = await query
+            // 1. Stats theo khoá học
+            var courseStats = await query
                 .GroupBy(x => new { x.CourseId, x.CourseName, x.CourseType, x.Price, x.CourseLink })
                 .Select(g => new {
                     g.Key.CourseName,
@@ -68,7 +75,32 @@ namespace ReviewKhoaHoc.Controllers
                 .OrderByDescending(x => x.TotalViews)
                 .ToListAsync();
 
-            return Ok(stats);
+            // 2. Stats theo ngày
+            var dailyStats = await query
+                .GroupBy(x => x.ViewedAt.Date)
+                .Select(g => new {
+                    Date = g.Key,
+                    TotalViews = g.Sum(x => x.ViewCount)
+                })
+                .OrderBy(x => x.Date)
+                .ToListAsync();
+
+
+            // 3. Stats theo loại khoá học (free vs paid)
+            var courseTypeStats = await query
+                .GroupBy(x => x.CourseType) // giả sử "free", "paid", hoặc giá trị khác
+                .Select(g => new {
+                    CourseType = g.Key,
+                    TotalViews = g.Sum(x => x.ViewCount)
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                CourseStats = courseStats,
+                DailyStats = dailyStats,
+                CourseTypeStats = courseTypeStats
+            });
         }
 
         // GET: api/courses?search=react&sortBy=views&order=desc&page=1&pageSize=10
