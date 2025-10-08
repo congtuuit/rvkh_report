@@ -22,7 +22,8 @@ services:
       - "7998:7998"
     environment:
       ASPNETCORE_URLS: "http://+:7998"
-      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=reviewkhoahoc_db;Username=postgres;Password=Admin123@@"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=reviewkhoahoc_db;Username=postgres;Password=Admin123@@"
+      AppSettings__ApiKey: "REVIEW_KHOA_HOC"
 
 volumes:
   postgres_data:
