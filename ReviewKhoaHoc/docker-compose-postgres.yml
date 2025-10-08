@@ -1,5 +1,4 @@
 version: "3.9"
-
 services:
   postgres:
     image: postgres:16
@@ -12,17 +11,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  api:
-    build: .
-    container_name: reviewkhoahoc_api
-    depends_on:
-      - postgres
-    ports:
-      - "7998:7998"
-    environment:
-      ASPNETCORE_URLS: "http://+:7998"
-      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=reviewkhoahoc_db;Username=postgres;Password=Admin123@@"
 
 volumes:
   postgres_data:
