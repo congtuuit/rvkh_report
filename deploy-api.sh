@@ -1,2 +1,2 @@
-docker compose build api
-docker compose up -d api
+rm -rf ./dashboard/dist
+docker build .
