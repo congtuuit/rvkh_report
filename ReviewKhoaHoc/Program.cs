@@ -5,10 +5,7 @@ using ReviewKhoaHoc.Middlewares;
 using ReviewKhoaHoc.Repositories;
 using System.Text.Json;
 
-
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
@@ -17,24 +14,6 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 builder.Services.AddScoped<IRepositoryFactory, RepositoryFactory>();
 
-
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy
-            .AllowAnyOrigin()
-            .AllowAnyHeader()
-            .WithMethods("GET", "POST", "PUT");
-            //.AllowAnyMethod();
-    });
-});
-
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -42,37 +21,42 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Serve static files (for React build)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddSpaStaticFiles(configuration =>
 {
     configuration.RootPath = "wwwroot";
 });
 
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-//app.UseRouting();
-app.UseSpa(spa =>
-{
-    spa.Options.SourcePath = "wwwroot";
-});
-
+app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 app.UseMiddleware<ApiKeyMiddleware>();
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.MapControllers();
+
+app.MapFallbackToFile("index.html");
 
 app.Run();
