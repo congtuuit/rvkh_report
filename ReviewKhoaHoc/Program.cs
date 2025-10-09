@@ -5,6 +5,7 @@ using ReviewKhoaHoc.Middlewares;
 using ReviewKhoaHoc.Repositories;
 using System.Text.Json;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -42,6 +43,12 @@ builder.Services.AddControllers()
     });
 
 
+// Serve static files (for React build)
+builder.Services.AddSpaStaticFiles(configuration =>
+{
+    configuration.RootPath = "wwwroot";
+});
+
 
 var app = builder.Build();
 
@@ -51,6 +58,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+//app.UseRouting();
+app.UseSpa(spa =>
+{
+    spa.Options.SourcePath = "wwwroot";
+});
 
 app.UseCors("AllowAll");
 
