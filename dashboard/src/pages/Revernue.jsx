@@ -4,6 +4,7 @@ import { Column } from "@ant-design/plots";
 import axios from "axios";
 import dayjs from "dayjs";
 import { getRevenueReportAsync } from "../api/dashboardService";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
@@ -127,7 +128,7 @@ export default function RevenueReport() {
   };
 
   return (
-    <div>
+    <LoadingOverlay loading={loading}>
       <Title level={3}>Báo cáo doanh thu</Title>
       <Space style={{ marginBottom: 16 }}>
         <RangePicker
@@ -165,6 +166,6 @@ export default function RevenueReport() {
         pagination={{ pageSize: 15 }}
         loading={loading}
       />
-    </div>
+    </LoadingOverlay>
   );
 }

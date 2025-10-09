@@ -2,7 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using ReviewKhoaHoc.Database;
 using ReviewKhoaHoc.Entities;
+using ReviewKhoaHoc.Interfaces;
 using ReviewKhoaHoc.Models;
+using ReviewKhoaHoc.Repositories;
 
 namespace ReviewKhoaHoc.Controllers
 {
@@ -10,25 +12,33 @@ namespace ReviewKhoaHoc.Controllers
     [Route("api/[controller]")]
     public class CourseAuditController : ControllerBase
     {
-        private readonly AppDbContext _db;
+        private readonly IRepositoryFactory _repositoryFactory;
+        private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public CourseAuditController(AppDbContext db)
+        public CourseAuditController(IRepositoryFactory repositoryFactory, IDbContextFactory<AppDbContext> dbContextFactory)
         {
-            _db = db;
+            _repositoryFactory = repositoryFactory;
+            _dbContextFactory = dbContextFactory;
         }
+
 
         [HttpPost]
         public async Task<IActionResult> AddView([FromBody] CourseViewAuditModel model)
         {
             var today = model.ViewedAt.Date;
-            var exists = await _db.CourseViewAudits.AnyAsync(x => x.CourseId == model.CourseId && x.Date == today);
+
+            var context = _repositoryFactory.CreateRepository<CourseViewAudit>();
+
+            var exists = await context.AnyAsync(x => x.CourseId == model.CourseId && x.Date == today);
+
             if (exists)
             {
-                await _db.Database.ExecuteSqlRawAsync(
+                await context.ExecuteSqlRawAsync(
                     "UPDATE \"course_view_audit\" " +
                     "SET \"ViewCount\" = \"ViewCount\" + 1, \"LastUpdated\" = NOW(), \"ViewedAt\" = NOW() " +
                     "WHERE \"CourseId\" = {0} AND \"Date\" = {1}",
-                    model.CourseId, today);
+                    model.CourseId, today
+                );
 
                 return Ok();
             }
@@ -41,31 +51,43 @@ namespace ReviewKhoaHoc.Controllers
                 Price = model.Price,
                 CourseLink = model.CourseLink,
                 ViewCount = model.ViewCount,
-                Date = today
+                Date = today,
+                ViewedAt = DateTime.UtcNow,
+                LastUpdated = DateTime.UtcNow
             };
-            _db.CourseViewAudits.Add(entity);
-            await _db.SaveChangesAsync();
+
+            await context.AddAsync(entity);
+            await context.SaveChangesAsync();
+
             return Ok();
         }
+
 
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats(DateTime? from = null, DateTime? to = null)
         {
-            var fromDate = from ?? DateTime.UtcNow.AddDays(-7);
-            var toDate = to ?? DateTime.UtcNow;
+            if (!from.HasValue || !to.HasValue)
+                return BadRequest("Missing 'from' or 'to' date.");
 
-            var fromUtc = DateTime.SpecifyKind(fromDate, DateTimeKind.Utc);
-            var toUtc = DateTime.SpecifyKind(toDate, DateTimeKind.Utc);
+            var fromUtc = from.Value.ToUniversalTime();
+            var toUtc = to.Value.ToUniversalTime();
 
-            var query = _db.CourseViewAudits.AsQueryable();
+            // Tạo 3 context riêng biệt để chạy song song
+            await using var context1 = await _dbContextFactory.CreateDbContextAsync();
+            await using var context2 = await _dbContextFactory.CreateDbContextAsync();
+            await using var context3 = await _dbContextFactory.CreateDbContextAsync();
 
-            if (from.HasValue) query = query.Where(x => x.ViewedAt >= fromUtc);
-            if (to.HasValue) query = query.Where(x => x.ViewedAt <= toUtc);
+            // Tạo repository cho từng context
+            var repo1 = new GenericRepository<CourseViewAudit>(context1);
+            var repo2 = new GenericRepository<CourseViewAudit>(context2);
+            var repo3 = new GenericRepository<CourseViewAudit>(context3);
 
-            // 1. Stats theo khoá học
-            var courseStats = await query
+            // 1. Thống kê theo khoá học
+            var courseStatsTask = repo1.Query()
+                .Where(x => x.ViewedAt >= fromUtc && x.ViewedAt <= toUtc)
                 .GroupBy(x => new { x.CourseId, x.CourseName, x.CourseType, x.Price, x.CourseLink })
-                .Select(g => new {
+                .Select(g => new
+                {
                     g.Key.CourseName,
                     g.Key.CourseType,
                     g.Key.Price,
@@ -75,33 +97,39 @@ namespace ReviewKhoaHoc.Controllers
                 .OrderByDescending(x => x.TotalViews)
                 .ToListAsync();
 
-            // 2. Stats theo ngày
-            var dailyStats = await query
-                .GroupBy(x => x.ViewedAt.Date)
-                .Select(g => new {
-                    Date = g.Key,
+            // 2. Thống kê theo ngày
+            var dailyStatsTask = repo2.Query()
+                .Where(x => x.ViewedAt >= fromUtc && x.ViewedAt <= toUtc)
+                .GroupBy(x => new { x.ViewedAt.Year, x.ViewedAt.Month, x.ViewedAt.Day })
+                .Select(g => new
+                {
+                    Date = new DateTime(g.Key.Year, g.Key.Month, g.Key.Day),
                     TotalViews = g.Sum(x => x.ViewCount)
                 })
                 .OrderBy(x => x.Date)
                 .ToListAsync();
 
-
-            // 3. Stats theo loại khoá học (free vs paid)
-            var courseTypeStats = await query
-                .GroupBy(x => x.CourseType) // giả sử "free", "paid", hoặc giá trị khác
-                .Select(g => new {
+            // 3. Thống kê theo loại khoá học
+            var courseTypeStatsTask = repo3.Query()
+                .Where(x => x.ViewedAt >= fromUtc && x.ViewedAt <= toUtc)
+                .GroupBy(x => x.CourseType)
+                .Select(g => new
+                {
                     CourseType = g.Key,
                     TotalViews = g.Sum(x => x.ViewCount)
                 })
                 .ToListAsync();
 
+            await Task.WhenAll(courseStatsTask, dailyStatsTask, courseTypeStatsTask);
+
             return Ok(new
             {
-                CourseStats = courseStats,
-                DailyStats = dailyStats,
-                CourseTypeStats = courseTypeStats
+                CourseStats = courseStatsTask.Result,
+                DailyStats = dailyStatsTask.Result,
+                CourseTypeStats = courseTypeStatsTask.Result
             });
         }
+
 
         // GET: api/courses?search=react&sortBy=views&order=desc&page=1&pageSize=10
         [HttpGet]
@@ -112,6 +140,8 @@ namespace ReviewKhoaHoc.Controllers
             int page = 1,
             int pageSize = 10)
         {
+            await using var _db = await _dbContextFactory.CreateDbContextAsync();
+
             var query = _db.CourseViewAudits.AsQueryable();
 
             // 🔍 Tìm kiếm theo tên khóa học

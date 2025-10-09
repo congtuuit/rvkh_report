@@ -33,7 +33,7 @@ export default function AppLayout({ children }) {
           items={menuItems}
         />
       </Sider>
-        <Content  className="main-content" style={{ margin: "24px 16px", padding: 24, background: "#fff", width: "100%" }}>
+        <Content  className="main-content" style={{ padding: 24, background: "#fff", width: "100%" }}>
           {children}
         </Content>
     </Layout>

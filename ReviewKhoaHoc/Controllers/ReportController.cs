@@ -17,13 +17,18 @@ namespace ReviewKhoaHoc.Controllers
         {
             var result = await FetchRevenueReportAsync(from, to);
 
-            return Ok(new
+            var orderSorted = result.Data
+                .Where(x => x.OrderCompletedDate.HasValue)
+                .OrderByDescending(x => x.OrderCompletedDate.Value)
+                .ToList();
+
+            var responseData = new
             {
                 result.Success,
                 result.Extra,
                 TotalOrders = result.Data.Count,
                 TotalRevenue = result.Data.Sum(x => x.OrderTotal),
-                Orders = result.Data,
+                Orders = orderSorted,
                 ChartData = result.Data
                     .Where(x => x.OrderCompletedDate.HasValue)
                     .GroupBy(x => x.OrderCompletedDate.Value.Date)
@@ -35,7 +40,9 @@ namespace ReviewKhoaHoc.Controllers
                         TotalRevenue = g.Sum(x => x.OrderTotal)
                     })
                     .ToList()
-            });
+            };
+
+            return Ok(responseData);
         }
 
         private const string REPORT_ENDPOINT = "https://reviewkhoahoc.net/wp-admin/admin-ajax.php?action=revenue_report_v2";

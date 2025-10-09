@@ -13,6 +13,7 @@ import dayjs from "dayjs";
 import { Column, Pie } from "@ant-design/plots";
 import { fillMissingDates } from "../utils/reportUtils";
 import { Link } from "react-router-dom";
+import LoadingOverlay from "../components/LoadingOverlay";
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -37,6 +38,10 @@ export default function Dashboard() {
 
   const fetchData = async () => {
     setLoading(true);
+
+    // Reset dữ liệu biểu đồ trước khi lấy mới
+    setViewsByDate([]);
+    setCourseTypeStats([]);
 
     const queryDate = {
       from: dataFilter.from.format("YYYY-MM-DD 00:00:00"),
@@ -176,7 +181,7 @@ export default function Dashboard() {
   };
 
   return (
-    <>
+    <LoadingOverlay loading={loading} tip="Đang tải dashboard...">
       <Title level={3}>Thống kê lượt xem khóa học</Title>
       <Space style={{ marginBottom: 16 }}>
         <Select
@@ -198,10 +203,10 @@ export default function Dashboard() {
           placeholder={columnCharMode == "week" ? "Chọn tuần" : "Chọn tháng"}
         />
 
-        <Button onClick={fetchData}>Áp dụng/ Làm mới</Button>
+        <Button type="primary" onClick={fetchData}>
+          Áp dụng/ Làm mới
+        </Button>
         <Button
-          variant="solid"
-          type="primary"
           onClick={() => {
             setDates(dayjs());
             setDataFilter({
@@ -216,12 +221,12 @@ export default function Dashboard() {
 
       <div style={{ marginTop: 32 }}>
         <Title level={4}>Biểu đồ lượt xem theo ngày</Title>
-        <Column {...columnConfig} />
+        <Column key={JSON.stringify(viewsByDate)} {...columnConfig} />
       </div>
 
       <div style={{ marginTop: 48 }}>
         <Title level={4}>Tỷ lệ lượt xem theo loại khóa học</Title>
-        <Pie {...pieConfig} />
+        <Pie key={JSON.stringify(courseTypeStats)} {...pieConfig} />
       </div>
 
       <Title level={4}>Thông tin chi tiết</Title>
@@ -232,6 +237,6 @@ export default function Dashboard() {
         rowKey="courseId"
         pagination={{ pageSize: 10 }}
       />
-    </>
+    </LoadingOverlay>
   );
 }
