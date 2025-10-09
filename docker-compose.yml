@@ -15,6 +15,7 @@ services:
 
   api:
     build: .
+    image: reviewkhoahoc_api
     container_name: reviewkhoahoc_api
     depends_on:
       - postgres
