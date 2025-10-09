@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { DatePicker, Table, Typography, Space, message, Button } from "antd";
 import { Column } from "@ant-design/plots";
-import axios from "axios";
 import dayjs from "dayjs";
 import { getRevenueReportAsync } from "../api/dashboardService";
 import LoadingOverlay from "../components/LoadingOverlay";
+import SimpleText from "../components/SimpleText";
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
@@ -14,6 +14,7 @@ export default function RevenueReport() {
   const [orders, setOrders] = useState([]);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [extraMessage, setExtraMessage] = useState("");
 
   const MAX_DAYS = 31;
 
@@ -28,6 +29,7 @@ export default function RevenueReport() {
       if (res.success) {
         setOrders(res.orders || []);
         setChartData(res.chartData || []);
+        setExtraMessage(res.extra);
       } else {
         message.error("Không thể tải dữ liệu");
       }
@@ -57,28 +59,25 @@ export default function RevenueReport() {
 
   const columns = [
     {
-      title: "Ngày tạo",
-      dataIndex: "created_date",
-      key: "created_date",
+      title: "Ngày",
+      dataIndex: "completed_date",
+      key: "completed_date",
     },
     {
       title: "Mã đơn",
       dataIndex: "order_number",
       key: "order_number",
+      width: "100px"
     },
     {
       title: "Tổng tiền",
       dataIndex: "order_total",
       key: "order_total",
+       width: "150px",
       render: (value) => value.toLocaleString("vi-VN") + " đ",
       align: "right",
     },
-
-    {
-      title: "Ngày hoàn tất",
-      dataIndex: "completed_date",
-      key: "completed_date",
-    },
+    
     {
       title: "Mô tả",
       dataIndex: "description",
@@ -151,7 +150,9 @@ export default function RevenueReport() {
         </Button>
       </Space>
 
-      <div style={{ marginTop: 32 }}>
+      <SimpleText text={extraMessage} />
+
+      <div>
         <Title level={4}>Biểu đồ doanh thu theo ngày</Title>
         <Column {...chartConfig} />
       </div>

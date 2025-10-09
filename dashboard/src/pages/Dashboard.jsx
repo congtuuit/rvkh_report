@@ -8,6 +8,8 @@ import {
   message,
   Button,
   Select,
+  Badge,
+  Tag,
 } from "antd";
 import dayjs from "dayjs";
 import { Column, Pie } from "@ant-design/plots";
@@ -115,7 +117,20 @@ export default function Dashboard() {
         );
       },
     },
-    { title: "Loại", dataIndex: "courseType", key: "type", width: "100px" },
+    {
+      title: "Loại",
+      dataIndex: "courseType",
+      key: "type",
+      width: "100px",
+      render: (value) => {
+        const isFree = value === "free";
+        return (
+          <Tag color={isFree ? "green" : "gold"}>
+            {isFree ? "Miễn phí" : "Thu phí"}
+          </Tag>
+        );
+      },
+    },
     {
       title: "Giá",
       dataIndex: "price",
