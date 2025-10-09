@@ -7,13 +7,17 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure DbContextFactory for PostgreSQL
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
+    // Make sure your connection string "DefaultConnection" is in appsettings.json
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+// Register Repository Factory
 builder.Services.AddScoped<IRepositoryFactory, RepositoryFactory>();
 
+// Configure Controllers and JSON options (CamelCase naming)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -21,9 +25,11 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
 
+// Configure Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Configure CORS policy to allow all origins/headers/methods
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -34,6 +40,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Configure SPA Static Files: tells the app where the built React files are located
 builder.Services.AddSpaStaticFiles(configuration =>
 {
     configuration.RootPath = "wwwroot";
@@ -41,6 +48,7 @@ builder.Services.AddSpaStaticFiles(configuration =>
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -48,15 +56,31 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Use the defined CORS policy
 app.UseCors("AllowAll");
 
+// Custom Middleware for API Key
 app.UseMiddleware<ApiKeyMiddleware>();
 
+// ----------------------------------------------------
+// SPA / Static File Configuration
+// ----------------------------------------------------
+
+// Enables serving default files (like index.html) when a directory is requested
 app.UseDefaultFiles();
+
+// Enables serving static files (JS, CSS, images, etc.) from wwwroot
 app.UseStaticFiles();
 
+// Map API Controllers
 app.MapControllers();
 
+// **CRITICAL FOR SPA ROUTING**
+// For any unmatched route (like /products/123), fall back to serving index.html.
+// The React router will then take over on the client-side.
 app.MapFallbackToFile("index.html");
+
+// ----------------------------------------------------
 
 app.Run();

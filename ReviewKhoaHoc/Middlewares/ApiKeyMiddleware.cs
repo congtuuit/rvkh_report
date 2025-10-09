@@ -4,6 +4,7 @@
     {
         private readonly RequestDelegate _next;
         private const string APIKEY_HEADER = "X-API-KEY";
+        private const string API_PATH_PREFIX = "/api/"; // Thêm prefix cần kiểm tra
 
         public ApiKeyMiddleware(RequestDelegate next)
         {
@@ -12,7 +13,23 @@
 
         public async Task InvokeAsync(HttpContext context, IConfiguration config)
         {
-            // Lấy API key từ cấu hình (appsettings.json hoặc env)
+            // Lấy đường dẫn của request và chuyển thành chữ thường để so sánh
+            var path = context.Request.Path.Value;
+
+            // KIỂM TRA ĐIỀU KIỆN BỎ QUA API KEY CHECK
+            // Nếu đường dẫn KHÔNG bắt đầu bằng "/api/" (ví dụ: "/", "/index.html", "/assets/...")
+            // THÌ cho phép request đi tiếp ngay lập tức mà không cần kiểm tra API Key.
+            if (!path.StartsWith(API_PATH_PREFIX, StringComparison.OrdinalIgnoreCase))
+            {
+                await _next(context);
+                return;
+            }
+
+            // ------------------------------------------------------------------
+            // CHỈ THỰC HIỆN KIỂM TRA API KEY VỚI CÁC ROUTE BẮT ĐẦU BẰNG /api/
+            // ------------------------------------------------------------------
+
+            // Lấy API key từ cấu hình
             var configuredKey = config["AppSettings:ApiKey"];
 
             if (string.IsNullOrWhiteSpace(configuredKey))
@@ -38,7 +55,7 @@
                 return;
             }
 
-            // Cho phép request đi tiếp
+            // Cho phép request đi tiếp nếu key hợp lệ
             await _next(context);
         }
     }
