@@ -114,7 +114,9 @@ export default function Chat() {
       {
         id: 1,
         user: "Alice",
-        text: welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)],
+        text: welcomeMessages[
+          Math.floor(Math.random() * welcomeMessages.length)
+        ],
         time: dayjs().format("HH:mm"),
       },
     ]);
@@ -143,6 +145,7 @@ export default function Chat() {
     <div
       style={{
         height: "95%",
+        maxHeight: "90vh",
       }}
     >
       <Row
@@ -186,8 +189,10 @@ export default function Chat() {
             backgroundColor: "#fff",
           }}
           dataSource={messages}
-          renderItem={(item) => {
+          renderItem={(item, index) => {
             const isMe = item.user === "User";
+            const isLast = index === messages.length - 1; // ✅ item cuối cùng
+
             return (
               <div>
                 <List.Item
@@ -202,7 +207,7 @@ export default function Chat() {
                     {!isMe && <Avatar src="/vite.svg" />}
                     <div
                       style={{
-                        backgroundColor: isMe ? "#1890ff" : "#f0f0f0",
+                        backgroundColor: isMe ? "rgb(124 192 255)" : "#f0f0f0",
                         color: isMe ? "white" : "black",
                         padding: "8px 16px",
                         borderRadius: 20,
@@ -227,7 +232,8 @@ export default function Chat() {
                   </Space>
                 </List.Item>
 
-                {isBotTyping && (
+                {/* ✅ Chỉ hiển thị typing sau item cuối */}
+                {isBotTyping && isLast && (
                   <List.Item
                     style={{
                       border: "none",
@@ -236,7 +242,7 @@ export default function Chat() {
                     }}
                   >
                     <Space align="end" style={{ maxWidth: "70%" }}>
-                      <Avatar icon={<UserOutlined />} />
+                      <Avatar src="/vite.svg" />
                       <div
                         style={{
                           backgroundColor: "#f0f0f0",
@@ -254,6 +260,7 @@ export default function Chat() {
             );
           }}
         />
+
         <div ref={messagesEndRef} />
 
         {/* Input */}
