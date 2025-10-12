@@ -56,8 +56,7 @@ export default function Dashboard() {
 
       // === Tính tổng lượt xem theo ngày ===
       const dailyStats = res["dailyStats"] ?? [];
-      const toDate = new Date().toISOString(); // hoặc dùng `to` mà bạn truyền vào API
-      const viewsByDate = fillMissingDates(dailyStats, columnCharMode, toDate);
+      const viewsByDate = fillMissingDates(dailyStats, columnCharMode);
       setViewsByDate(viewsByDate);
 
       // === Set biểu đồ tròn ===

@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 export function generateDateRange(mode = "week", toDateStr) {
   const toDate = dayjs(toDateStr).endOf(mode);
   const fromDate = dayjs(toDateStr).startOf(mode);
-
   const range = [];
   let current = fromDate;
 
@@ -15,9 +14,8 @@ export function generateDateRange(mode = "week", toDateStr) {
   return range;
 }
 
-export function fillMissingDates(dailyStats, mode, toDateStr) {
-  const fullDates = generateDateRange(mode, toDateStr);
-
+export function fillMissingDates(dailyStats, mode) {
+  const fullDates = generateDateRange(mode, dailyStats[0].date);
   const statMap = new Map(
     dailyStats.map((item) => [dayjs(item.date).format("YYYY-MM-DD"), item.totalViews])
   );
