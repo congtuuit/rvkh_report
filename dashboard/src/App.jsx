@@ -14,7 +14,19 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/doanh-thu" element={<Revernue />} />
-          <Route path="/chat" element={<Chat />} />
+          <Route path="/chat-bot-khoa-hoc" element={<Chat />} />
+          <Route
+            path="/chat"
+            element={
+              <div
+                style={{
+                  height: "90vh",
+                }}
+              >
+                <Chat />
+              </div>
+            }
+          />
           <Route path="/search" element={<Search />} />
         </Routes>
       </AppLayout>

@@ -15,6 +15,8 @@ const welcomeMessages = [
 ];
 
 export default function Chat() {
+  const listRef = useRef(null);
+
   const randomWelcome =
     welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
   const [messages, setMessages] = useState([
@@ -181,87 +183,99 @@ export default function Chat() {
         </div>
 
         {/* Messages list */}
-        <List
+
+        {/* Messages list */}
+        <div
           style={{
             flex: 1,
             overflowY: "auto",
             padding: "16px 24px",
             backgroundColor: "#fff",
           }}
-          dataSource={messages}
-          renderItem={(item, index) => {
-            const isMe = item.user === "User";
-            const isLast = index === messages.length - 1; // ✅ item cuối cùng
+        >
+          <List
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "16px 24px",
+              backgroundColor: "#fff",
+            }}
+            dataSource={messages}
+            renderItem={(item, index) => {
+              const isMe = item.user === "User";
+              const isLast = index === messages.length - 1;
 
-            return (
-              <div>
-                <List.Item
-                  key={item.id}
-                  style={{
-                    border: "none",
-                    justifyContent: isMe ? "flex-end" : "flex-start",
-                    padding: "8px 0",
-                  }}
-                >
-                  <Space align="end" style={{ maxWidth: "70%" }}>
-                    {!isMe && <Avatar src="/vite.svg" />}
-                    <div
-                      style={{
-                        backgroundColor: isMe ? "rgb(124 192 255)" : "#f0f0f0",
-                        color: isMe ? "white" : "black",
-                        padding: "8px 16px",
-                        borderRadius: 20,
-                        wordBreak: "break-word",
-                      }}
-                    >
-                      <Text style={{ whiteSpace: "pre-wrap" }}>
-                        {parseMessageText(item.text)}
-                      </Text>
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: isMe ? "rgba(255,255,255,0.7)" : "#999",
-                          marginTop: 4,
-                          textAlign: "right",
-                        }}
-                      >
-                        {item.time}
-                      </div>
-                    </div>
-                    {isMe && <Avatar icon={<UserOutlined />} />}
-                  </Space>
-                </List.Item>
-
-                {/* ✅ Chỉ hiển thị typing sau item cuối */}
-                {isBotTyping && isLast && (
+              return (
+                <div key={item.id}>
                   <List.Item
                     style={{
                       border: "none",
-                      justifyContent: "flex-start",
+                      justifyContent: isMe ? "flex-end" : "flex-start",
                       padding: "8px 0",
                     }}
                   >
                     <Space align="end" style={{ maxWidth: "70%" }}>
-                      <Avatar src="/vite.svg" />
+                      {!isMe && <Avatar src="/vite.svg" />}
                       <div
                         style={{
-                          backgroundColor: "#f0f0f0",
-                          color: "black",
+                          backgroundColor: isMe
+                            ? "rgb(124 192 255)"
+                            : "#f0f0f0",
+                          color: isMe ? "white" : "black",
                           padding: "8px 16px",
                           borderRadius: 20,
+                          wordBreak: "break-word",
                         }}
                       >
-                        <Text>Đang trả lời...</Text>
+                        <Text style={{ whiteSpace: "pre-wrap" }}>
+                          {parseMessageText(item.text)}
+                        </Text>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            color: isMe ? "rgba(255,255,255,0.7)" : "#999",
+                            marginTop: 4,
+                            textAlign: "right",
+                          }}
+                        >
+                          {item.time}
+                        </div>
                       </div>
+                      {isMe && <Avatar icon={<UserOutlined />} />}
                     </Space>
                   </List.Item>
-                )}
-              </div>
-            );
-          }}
-        />
 
-        <div ref={messagesEndRef} />
+                  {isBotTyping && isLast && (
+                    <List.Item
+                      style={{
+                        border: "none",
+                        justifyContent: "flex-start",
+                        padding: "8px 0",
+                      }}
+                    >
+                      <Space align="end" style={{ maxWidth: "70%" }}>
+                        <Avatar src="/vite.svg" />
+                        <div
+                          style={{
+                            backgroundColor: "#f0f0f0",
+                            color: "black",
+                            padding: "8px 16px",
+                            borderRadius: 20,
+                          }}
+                        >
+                          <Text>Đang trả lời...</Text>
+                        </div>
+                      </Space>
+                    </List.Item>
+                  )}
+                </div>
+              );
+            }}
+          />
+
+          {/* ✅ THÊM DÒNG NÀY — điểm đánh dấu cuối */}
+          <div ref={messagesEndRef} />
+        </div>
 
         {/* Input */}
         <div
