@@ -16,6 +16,7 @@ const welcomeMessages = [
 
 export default function Chat() {
   const listRef = useRef(null);
+  const [dots, setDots] = useState("");
 
   const randomWelcome =
     welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
@@ -44,6 +45,13 @@ export default function Chat() {
       localStorage.setItem("rvkh_chatMessages", JSON.stringify(messages));
     }
   }, [messages]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length < 4 ? prev + "." : ""));
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleBotReply = async (userMessage) => {
     if (!userMessage) return;
@@ -263,7 +271,7 @@ export default function Chat() {
                             borderRadius: 20,
                           }}
                         >
-                          <Text>Đang trả lời...</Text>
+                          <Text> Đang trả lời{dots}</Text>
                         </div>
                       </Space>
                     </List.Item>
@@ -289,7 +297,7 @@ export default function Chat() {
           }}
         >
           <TextArea
-            autoSize={{ minRows: 1, maxRows: 4 }}
+            autoSize={{ minRows: 3 }}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
